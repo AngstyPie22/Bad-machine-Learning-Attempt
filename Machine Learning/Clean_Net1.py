@@ -23,15 +23,15 @@ class KPNet():
 				if deriv == False:
 					x = x*(x>0)
 					return x
-				elif deriv ==True:
+				else:
 					x[x<=0] = 0
 					x[x>0] = 1
 					return x
 			elif function.lower() in ['sig','sigmoid']:
 				if deriv == False:
-					x = 1./(1 + np.exp(x))
+					x = 1./(1 + np.exp(-x))
 					return x
-				elif deriv == True:
+				else:
 					x = x * (1-x)
 					return x
 			elif function.lower() in ['softmax','soft']:
@@ -63,7 +63,7 @@ class KPNet():
 				Create.OList.append(RL)
 				arps += 1
 			Out_Wm = np.dot(Create.OList[len(Create.OList)-1],W[len(W)-1])+Create.BList[len(Create.BList)-1]
-			Out_fin = Activation('soft',Out_Wm,False)
+			Out_fin = Activation('sig',Out_Wm,False)
 			Create.OList.append(Out_fin)
 		def Back(Expected,W,B,Data,Activ,LR):#takes the output and compares it to the desired output. Determines the error and adjusts the network to lower it.
 			Back.WList = np.array([])
@@ -71,10 +71,9 @@ class KPNet():
 			Back.Out = Create.OList[len(Create.OList)-1]
 			#OLD ERROR Back.Error = Expected - Create.OList[len(Create.OList)-1]
 			Back.Error = -np.log(Create.OList[len(Create.OList)-1][0][Expected])
-			#Back.Overall = float(Back.Error.sum())/len(Back.Error)
 			Delta = (Back.Error * Create.OList[len(Create.OList)-1])
-			W[len(W)-1] -= (Create.OList[len(Create.OList)-2].T.dot(Delta))*LR
-			B[len(B)-1] -= Delta*LR
+			W[len(W)-1] += (Create.OList[len(Create.OList)-2].T.dot(Delta))*LR
+			B[len(B)-1] += Delta*LR
 			arps = len(W)-1
 			for i in range(arps):
 				Error = Delta.dot(W[arps].T)
@@ -108,21 +107,20 @@ class KPNet():
 					Wl = Back.WList
 					Bl = Back.BList
 					if arpsd >= len(Input)-1:
-						Error_values.append(Back.Error)
+						Error_values.append(sum(Back.Error))
 						XValues.append(Epoc)
 					arpsd+=1
 				Wl = Back.WList
 				Bl = Back.BList
 				print('This is Epoc',Epoc)
-				#print(Create.OList[len(Create.OList)-1])
+				print(Create.OList[len(Create.OList)-1])
 				Epoc += 1
 			self.W = Wl
 			self.B = Bl
 			plt.plot(XValues,Error_values)
 			plt.show()
-		#Go(DSQ3x3.Data,Epocs,Learning_Rate,Hidden_Sizes,'sig')#This is the master control. Use this to set the activation function and data input.
 		Go(self.Input_Data,self.Epocs,self.Learning_Rate,self.Hidden_Sizes,self.Activation)
-#Net = KPNet(DSQ3x3.Data,200,.1,[20,20,20],'sig')
+Net = KPNet(DSQ3x3.Data,100,.001,[20,20,20],'sig')
 #Epocs = how many times we put the whole data set through the network.
 #Learning_Rate = how much we want to change the network per wrong answer
 #Hidden_Sizes = How many layers are in the network and the # of neurons in each layer. Goes from after input to just before output'''
